@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sachwertrechner für Einfamilienhäuser</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .section {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="number"], select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .radio-option {
+            display: flex;
+            align-items: center;
+        }
+        .info-text {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+        .info-text h3 {
+            color: #2c3e50;
+            margin: 10px 0 5px 0;
+        }
+        .info-text h4 {
+            color: #3498db;
+            margin: 12px 0 5px 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 3px;
+        }
+        .info-text ul {
+            margin: 5px 0 10px 0;
+            padding-left: 20px;
+        }
+        .info-text li {
+            margin-bottom: 4px;
+        }
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .checkbox-option {
+            display: flex;
+            align-items: center;
+        }
+        button {
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            display: block;
+            margin: 20px auto;
+        }
+        button:hover {
+            background-color: #1a2530;
+        }
+        .results {
+            margin-top: 30px;
+        }
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .main-result {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #2c3e50;
+            text-align: center;
+            padding: 15px;
+            background-color: #e8f4fc;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        @media (max-width: 600px) {
+            .radio-group {
+                flex-direction: column;
+                gap: 8px;
+            }
+            .checkbox-group {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Sachwertrechner für Einfamilienhäuser (NHK 2020)</h1>
+    
+    <div class="section">
+        <h2>Grundstücksdaten</h2>
+        
+        <div class="form-group">
+            <label for="grundstuecksgroesse">Grundstücksgröße (m²)</label>
+            <input type="number" id="grundstuecksgroesse" min="0" step="1" value="500">
+        </div>
+        
+        <div class="form-group">
+            <label for="bodenrichtwert">Bodenrichtwert (€/m²)</label>
+            <input type="number" id="bodenrichtwert" min="0" step="1" value="300">
+            <div class="info-text">
+                Der Bodenrichtwert ist ein durchschnittlicher Lagewert des Grundstücks und kann beim örtlichen Gutachterausschuss oder unter www.boris.nrw.de eingesehen werden.
+            </div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>Anpassungsfaktoren</h2>
+        
+        <div class="form-group">
+            <label for="baupreisindex">Baupreisindex</label>
+            <input type="number" id="baupreisindex" min="100" max="250" step="0.1" value="133.0">
+            <div class="info-text">
+                Der Baupreisindex des Statistischen Bundesamts für Wohngebäude (Basis 2020 = 100) beträgt 2023/2024 etwa 130-135, was einer Steigerung der Baukosten um ca. 33% seit 2020 entspricht.
+                <br>Da die NHK 2020 bereits auf dem Preisniveau von 2020 basieren, muss nur die Preissteigerung seit 2020 berücksichtigt werden.
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="sachwertfaktor">Sachwertfaktor</label>
+            <input type="number" id="sachwertfaktor" min="0.5" max="1.5" step="0.01" value="1.05">
+            <div class="info-text">
+                Der Sachwertfaktor passt den ermittelten Sachwert an die tatsächliche Marktsituation an. Standardwert für Langenfeld (Rheinland): 1,05.
+                <br>Werte unter 1,0 deuten auf einen schwachen Immobilienmarkt hin, Werte über 1,0 auf einen starken Markt mit hoher Nachfrage.
+                <br>Lokale Baukostenunterschiede werden im NRW-Modell nicht durch einen Regionalfaktor, sondern im Zuge der Marktanpassung (Sachwertfaktor) berücksichtigt.
+            </div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>Gebäudedaten</h2>
+        
+        <div class="form-group">
+            <label for="bauform">Bauform</label>
+            <select id="bauform">
+                <option value="freistehend">Freistehendes EFH</option>
+                <option value="doppelhaus">Doppelhaushälfte</option>
+                <option value="reihenhaus">Reihenhaus</option>
+            </select>
+            <div class="info-text">
+                Die Bauform beeinflusst die Herstellungskosten durch unterschiedliche Außenwandflächen und Baukosten:
+                <ul>
+                    <li><strong>Freistehendes EFH:</strong> Keine Anpassung (Basiswert der NHK)</li>
+                    <li><strong>Doppelhaushälfte:</strong> 5% niedrigere Herstellungskosten</li>
+                    <li><strong>Reihenhaus:</strong> 10% niedrigere Herstellungskosten</li>
+                </ul>
+                Die niedrigeren Herstellungskosten ergeben sich aus geringeren Außenwandflächen und Kostenvorteilen bei gemeinsamer Errichtung.
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="bruttoGrundflaeche">Brutto-Grundfläche (m²)</label>
+            <input type="number" id="bruttoGrundflaeche" min="0" step="1" value="180">
+            <div class="info-text">
+                Die Brutto-Grundfläche umfasst die Gesamtfläche aller Geschosse einschließlich der Außenwände. Sie wird üblicherweise aus den Außenmaßen des Gebäudes berechnet.
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="baujahr">Baujahr</label>
+            <input type="number" id="baujahr" min="1800" max="2025" value="1985">
+        </div>
+        
+        <div class="form-group">
+            <label for="modernisierungsjahr">Letzte umfassende Modernisierung (Jahr, optional)</label>
+            <input type="number" id="modernisierungsjahr" min="1800" max="2025" value="2015">
+            <div class="info-text">
+                Geben Sie hier das Jahr der letzten umfassenden Modernisierung an, wenn wesentliche Bauteile wie Dach, Fassade, Heizung oder Fenster erneuert wurden.
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="unterkellerung">Unterkellerung</label>
+            <select id="unterkellerung">
+                <option value="voll">Vollkeller</option>
+                <option value="teil">Teilkeller</option>
+                <option value="kein">Kein Keller</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="dachgeschoss">Dachgeschoss</label>
+            <select id="dachgeschoss">
+                <option value="voll">Voll ausgebaut</option>
+                <option value="teil">Teilausgebaut</option>
+                <option value="nicht">Nicht ausgebaut</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>Ausstattungsstandard</h2>
+        
+        <div class="form-group">
+            <div class="radio-group">
+                <div class="radio-option">
+                    <input type="radio" id="standard-einfach" name="ausstattungsstandard" value="einfach">
+                    <label for="standard-einfach">Einfach</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" id="standard-mittel" name="ausstattungsstandard" value="mittel" checked>
+                    <label for="standard-mittel">Mittel</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" id="standard-gehoben" name="ausstattungsstandard" value="gehoben">
+                    <label for="standard-gehoben">Gehoben</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" id="standard-sehrGehoben" name="ausstattungsstandard" value="sehrGehoben">
+                    <label for="standard-sehrGehoben">Sehr gehoben</label>
+                </div>
+            </div>
+            <div class="info-text">
+                <h3>Ausstattungsstandard-Kriterien</h3>
+                
+                <h4>Einfach</h4>
+                <ul>
+                    <li><strong>Boden:</strong> Einfache PVC-Beläge, günstige Fliesen, einfaches Laminat</li>
+                    <li><strong>Wände/Decken:</strong> Raufaser/Putz mit einfacher Dispersionsfarbe</li>
+                    <li><strong>Fenster:</strong> Standard-Isolierverglasung</li>
+                    <li><strong>Bad:</strong> Einfache Standardausstattung, weiße Sanitärobjekte</li>
+                    <li><strong>Heizung:</strong> Einfache Heizkörper, Standard-Öl- oder Gasheizung</li>
+                    <li><strong>Elektro:</strong> Grundinstallation, wenige Steckdosen</li>
+                </ul>
+                
+                <h4>Mittel</h4>
+                <ul>
+                    <li><strong>Boden:</strong> Besseres Laminat, mittelwertige Fliesen und Teppichböden</li>
+                    <li><strong>Wände/Decken:</strong> Glatte Oberflächen, höherwertige Wandfarben, teilweise Tapeten</li>
+                    <li><strong>Fenster:</strong> Gute Wärmeschutzverglasung, Kunststoff- oder Aluminiumrahmen</li>
+                    <li><strong>Bad:</strong> Bessere Sanitärobjekte, teilweise farbig, Markenausstattung</li>
+                    <li><strong>Heizung:</strong> Moderne Heizkörper, Brennwerttechnik</li>
+                    <li><strong>Elektro:</strong> Gute Ausstattung mit Steckdosen, Schaltern, teilweise Außenbeleuchtung</li>
+                </ul>
+                
+                <h4>Gehoben</h4>
+                <ul>
+                    <li><strong>Boden:</strong> Echtholzparkett, hochwertige Fliesen, Naturstein in Teilbereichen</li>
+                    <li><strong>Wände/Decken:</strong> Besondere Wandgestaltungen, Akzentwände, indirekte Beleuchtung</li>
+                    <li><strong>Fenster:</strong> Hochwertige Wärmeschutzverglasung, Holz-/Holz-Aluminiumrahmen</li>
+                    <li><strong>Bad:</strong> Hochwertige Markenausstattung, Designerelemente, Doppelwaschbecken, bodengleiche Dusche</li>
+                    <li><strong>Heizung:</strong> Fußbodenheizung in Teilbereichen, hocheffiziente Heiztechnik</li>
+                    <li><strong>Elektro:</strong> Umfangreiche Installation, Bewegungsmelder, Sicherheitstechnik</li>
+                </ul>
+                
+                <h4>Sehr gehoben</h4>
+                <ul>
+                    <li><strong>Boden:</strong> Hochwertige Massivholzdielen, besondere Natursteinböden, Designer-Fliesen</li>
+                    <li><strong>Wände/Decken:</strong> Exklusive Wandgestaltungen, Stuck, spezielle Raumkonzepte</li>
+                    <li><strong>Fenster:</strong> Spezial-Wärmeschutzverglasung, Schallschutz, elektrische Rollläden/Jalousien</li>
+                    <li><strong>Bad:</strong> Luxus-Sanitärobjekte, Whirlpool/Jacuzzi, Sauna, Wellnessbereich</li>
+                    <li><strong>Heizung:</strong> Komplette Fußbodenheizung, Wärmepumpe, smarte Steuerung</li>
+                    <li><strong>Elektro:</strong> KNX-/Smart-Home-System, umfassende LED-Beleuchtungskonzepte, Hausautomation</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>Besondere Merkmale (optional)</h2>
+        
+        <div class="form-group">
+            <label for="baumaengel">Bauschäden/Mängel (geschätzter Reparaturaufwand in €)</label>
+            <input type="number" id="baumaengel" min="0" step="100" value="0">
+        </div>
+        
+        <div class="form-group">
+            <label>Besondere Ausstattungsmerkmale</label>
+            <div class="checkbox-group">
+                <div class="checkbox-option">
+                    <input type="checkbox" id="schwimmbad" value="schwimmbad">
+                    <label for="schwimmbad">Schwimmbad (+30.000 €)</label>
+                </div>
+                <div class="checkbox-option">
+                    <input type="checkbox" id="sauna" value="sauna">
+                    <label for="sauna">Sauna (+8.000 €)</label>
+                </div>
+                <div class="checkbox-option">
+                    <input type="checkbox" id="solaranlage" value="solaranlage">
+                    <label for="solaranlage">Solaranlage (+15.000 €)</label>
+                </div>
+                <div class="checkbox-option">
+                    <input type="checkbox" id="einbaukueche" value="einbaukueche">
+                    <label for="einbaukueche">Hochwertige Einbauküche (+12.000 €)</label>
+                </div>
+                <div class="checkbox-option">
+                    <input type="checkbox" id="smarthome" value="smarthome">
+                    <label for="smarthome">Smart Home (+10.000 €)</label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="sonstigesWert">Sonstige Ausstattungsmerkmale (Wert in €)</label>
+            <input type="number" id="sonstigesWert" min="0" step="100" value="0">
+        </div>
+    </div>
+    
+    <button type="button" onclick="berechnen()">Berechnen</button>
+    
+    <div id="ergebnisBereich" class="results" style="display: none;">
+        <div class="section">
+            <div class="main-result" id="verkehrswert">Geschätzter Verkehrswert: </div>
+            
+            <div class="result-item">
+                <span>Bodenwert:</span>
+                <span id="bodenwert"></span>
+            </div>
+            <div class="result-item">
+                <span>Baupreisindex (Basis 2020 = 100):</span>
+                <span id="baupreisindexAnzeige"></span>
+            </div>
+            <div class="result-item">
+                <span>Basis NHK 2020 (vor Baupreisindexierung):</span>
+                <span id="basisNHK"></span>
+            </div>
+            <div class="result-item">
+                <span>Bauformanpassung:</span>
+                <span id="bauformanpassungAnzeige"></span>
+            </div>
+            <div class="result-item">
+                <span>Gebäudesachwert (neu):</span>
+                <span id="gebaeudeSachwertNeu"></span>
+            </div>
+            <div class="result-item">
+                <span>Angesetzte Gesamtnutzungsdauer:</span>
+                <span id="nutzungsdauerAnzeige"></span>
+            </div>
+            <div class="result-item">
+                <span>Alterswertminderung:</span>
+                <span id="alterswertminderung"></span>
+            </div>
+            <div class="result-item">
+                <span>Gebäudesachwert (nach Alter):</span>
+                <span id="gebaeudeSachwertNachAlter"></span>
+            </div>
+            <div class="result-item">
+                <span>Wertanpassungen:</span>
+                <span id="wertanpassungen"></span>
+            </div>
+            <div class="result-item">
+                <span>Vorläufiger Sachwert:</span>
+                <span id="vorlaufigerSachwert"></span>
+            </div>
+            <div class="result-item">
+                <span>Angewandter Sachwertfaktor:</span>
+                <span id="sachwertfaktorAnzeige"></span>
+            </div>
+        </div>
+    </div>
+
+<script>
+// Funktion zur Währungsformatierung
+function formatCurrency(value) {
+    return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value);
+}
+
+// Hauptberechnungsfunktion
+function berechnen() {
+    // Konstante Werte
+    var NHK = {
+        einfach: 1110,
+        mittel: 1380,
+        gehoben: 1720,
+        sehrGehoben: 2150
+    };
+    
+    var GESAMTNUTZUNGSDAUER = {
+        einfach: 65,
+        mittel: 70,
+        gehoben: 75,
+        sehrGehoben: 80
+    };
+    
+    var AUSSTATTUNGSMERKMALE = {
+        schwimmbad: 30000,
+        sauna: 8000,
+        solaranlage: 15000,
+        einbaukueche: 12000,
+        smarthome: 10000
+    };
+    
+    var aktuellesJahr = 2025;
+    
+    // Eingabewerte abrufen
+    var grundstuecksgroesse = Number(document.getElementById('grundstuecksgroesse').value);
+    var bodenrichtwert = Number(document.getElementById('bodenrichtwert').value);
+    var baupreisindex = Number(document.getElementById('baupreisindex').value);
+    var sachwertfaktor = Number(document.getElementById('sachwertfaktor').value);
+    var bruttoGrundflaeche = Number(document.getElementById('bruttoGrundflaeche').value);
+    var baujahr = Number(document.getElementById('baujahr').value);
+    var modernisierungsjahr = document.getElementById('modernisierungsjahr').value ? 
+                             Number(document.getElementById('modernisierungsjahr').value) : null;
+    var unterkellerung = document.getElementById('unterkellerung').value;
+    var dachgeschoss = document.getElementById('dachgeschoss').value;
+    var ausstattungsstandard = document.querySelector('input[name="ausstattungsstandard"]:checked').value;
+    var baumaengel = Number(document.getElementById('baumaengel').value);
+    var sonstigesWert = Number(document.getElementById('sonstigesWert').value);
+    
+    // 1. Bodenwert berechnen
+    var bodenwert = grundstuecksgroesse * bodenrichtwert;
+    
+    // 2. Aktuelle NHK berechnen
+    var nhk_aktuell = NHK[ausstattungsstandard] * (baupreisindex / 100);
+    
+    // Bauformanpassung für NHK
+    var bauform = document.getElementById('bauform').value;
+    var bauformFaktor = 1.0;
+    
+    if (bauform === 'doppelhaus') {
+        bauformFaktor = 0.95; // 5% geringere Herstellungskosten bei Doppelhaushälften
+    } else if (bauform === 'reihenhaus') {
+        bauformFaktor = 0.9; // 10% geringere Herstellungskosten bei Reihenhäusern
+    }
+    
+    nhk_aktuell = nhk_aktuell * bauformFaktor;
+    
+    // 3. Gebäudesachwert (ohne Alterswertminderung)
+    var gebaeude_neu = bruttoGrundflaeche * nhk_aktuell;
+    
+    // Anpassungen für Keller und Dachgeschoss
+    if (unterkellerung === 'teil') gebaeude_neu *= 0.95;
+    if (unterkellerung === 'kein') gebaeude_neu *= 0.9;
+    if (dachgeschoss === 'teil') gebaeude_neu *= 0.95;
+    if (dachgeschoss === 'nicht') gebaeude_neu *= 0.9;
+    
+    // 4. Alterswertminderung berechnen
+    var fiktives_Baujahr = baujahr;
+    if (modernisierungsjahr) {
+        fiktives_Baujahr = baujahr + (modernisierungsjahr - baujahr) * 0.5;
+    }
+    
+    var alter = aktuellesJahr - fiktives_Baujahr;
+    var nutzungsdauer = GESAMTNUTZUNGSDAUER[ausstattungsstandard];
+    var alterswertminderung = Math.min(alter / nutzungsdauer, 0.9) * gebaeude_neu;
+    
+    // 5. Gebäudesachwert nach Alterswertminderung
+    var gebaeudewert = gebaeude_neu - alterswertminderung;
+    
+    // Anpassung für besondere Merkmale
+    var wertanpassungen = -baumaengel;
+    
+    // Besondere Ausstattungsmerkmale
+    if (document.getElementById('schwimmbad').checked) wertanpassungen += AUSSTATTUNGSMERKMALE.schwimmbad;
+    if (document.getElementById('sauna').checked) wertanpassungen += AUSSTATTUNGSMERKMALE.sauna;
+    if (document.getElementById('solaranlage').checked) wertanpassungen += AUSSTATTUNGSMERKMALE.solaranlage;
+    if (document.getElementById('einbaukueche').checked) wertanpassungen += AUSSTATTUNGSMERKMALE.einbaukueche;
+    if (document.getElementById('smarthome').checked) wertanpassungen += AUSSTATTUNGSMERKMALE.smarthome;
+    
+    // Sonstige Ausstattungsmerkmale
+    wertanpassungen += sonstigesWert;
+    
+    gebaeudewert += wertanpassungen;
+    
+    // 6. Vorläufiger Sachwert
+    var vorlaufigerSachwert = gebaeudewert + bodenwert;
+    
+    // 7. Verkehrswert
+    var verkehrswert = vorlaufigerSachwert * sachwertfaktor;
+    
+    // Ergebnisse anzeigen
+    document.getElementById('ergebnisBereich').style.display = 'block';
+    document.getElementById('verkehrswert').textContent = "Geschätzter Verkehrswert: " + formatCurrency(verkehrswert);
+    document.getElementById('bodenwert').textContent = formatCurrency(bodenwert);
+    document.getElementById('baupreisindexAnzeige').textContent = baupreisindex.toFixed(1);
+    document.getElementById('basisNHK').textContent = formatCurrency(NHK[ausstattungsstandard]) + "/m²";
+    document.getElementById('bauformanpassungAnzeige').textContent = 
+        bauform === 'freistehend' ? "Keine (freistehendes EFH)" : 
+        bauform === 'doppelhaus' ? "Faktor 0,95 bei NHK (Doppelhaushälfte)" : 
+        "Faktor 0,90 bei NHK (Reihenhaus)";
+    document.getElementById('gebaeudeSachwertNeu').textContent = formatCurrency(gebaeude_neu);
+    document.getElementById('nutzungsdauerAnzeige').textContent = nutzungsdauer + " Jahre";
+    document.getElementById('alterswertminderung').textContent = formatCurrency(alterswertminderung);
+    document.getElementById('gebaeudeSachwertNachAlter').textContent = formatCurrency(gebaeude_neu - alterswertminderung);
+    document.getElementById('wertanpassungen').textContent = formatCurrency(wertanpassungen);
+    document.getElementById('vorlaufigerSachwert').textContent = formatCurrency(vorlaufigerSachwert);
+    document.getElementById('sachwertfaktorAnzeige').textContent = sachwertfaktor.toFixed(2);
+    
+    // Zum Ergebnisbereich scrollen
+    document.getElementById('ergebnisBereich').scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
