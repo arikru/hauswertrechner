@@ -203,14 +203,6 @@
         </div>
         
         <div class="form-group">
-            <label for="modernisierungsjahr">Letzte umfassende Modernisierung (Jahr, optional)</label>
-            <input type="number" id="modernisierungsjahr" min="1800" max="2025" value="2015">
-            <div class="info-text">
-                Geben Sie hier das Jahr der letzten umfassenden Modernisierung an, wenn wesentliche Bauteile wie Dach, Fassade, Heizung oder Fenster erneuert wurden.
-            </div>
-        </div>
-        
-        <div class="form-group">
             <label for="unterkellerung">Unterkellerung</label>
             <select id="unterkellerung">
                 <option value="voll">Vollkeller</option>
@@ -226,6 +218,57 @@
                 <option value="teil">Teilausgebaut</option>
                 <option value="nicht">Nicht ausgebaut</option>
             </select>
+        </div>
+
+        <div class="form-group">
+            <label>Modernisierungselemente (Punktevergabe, max. laut Tabelle)</label>
+            <div class="checkbox-group">
+                <div class="checkbox-option">
+                    <label for="mod_dach">Dacherneuerung inkl. Wärmedämmung (max. 4)</label>
+                    <input type="number" id="mod_dach" min="0" max="4" value="0">
+                </div>
+                <div class="checkbox-option">
+                    <label for="mod_fenster">Fenster & Außentüren (max. 2)</label>
+                    <input type="number" id="mod_fenster" min="0" max="2" value="0">
+                </div>
+                <div class="checkbox-option">
+                    <label for="mod_leitungen">Leitungssysteme (Strom, Gas, Wasser, Abwasser) (max. 2)</label>
+                    <input type="number" id="mod_leitungen" min="0" max="2" value="0">
+                </div>
+                <div class="checkbox-option">
+                    <label for="mod_heizung">Heizungsanlage (max. 2)</label>
+                    <input type="number" id="mod_heizung" min="0" max="2" value="0">
+                </div>
+                <div class="checkbox-option">
+                    <label for="mod_waermedaemmung">Wärmedämmung der Außenwände (max. 4)</label>
+                    <input type="number" id="mod_waermedaemmung" min="0" max="4" value="0">
+                </div>
+                <div class="checkbox-option">
+                    <label for="mod_baeder">Bäder (max. 2)</label>
+                    <input type="number" id="mod_baeder" min="0" max="2" value="0">
+                </div>
+                <div class="checkbox-option">
+                    <label for="mod_innenausbau">Innenausbau (Decken, Fußböden, Treppen) (max. 2)</label>
+                    <input type="number" id="mod_innenausbau" min="0" max="2" value="0">
+                </div>
+                <div class="checkbox-option">
+                    <label for="mod_grundriss">Verbesserung Grundrissgestaltung (max. 2)</label>
+                    <input type="number" id="mod_grundriss" min="0" max="2" value="0">
+                </div>
+            </div>
+            <div class="info-text">
+                Die Summe der vergebenen Punkte ergibt die Modernisierungspunktzahl gemäß ImmoWertV Anlage 2.<br>
+                Maximal erreichbare Punktzahl: 20.
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="restnutzungsdauer">Restnutzungsdauer (berechnet, Jahre)</label>
+            <input type="number" id="restnutzungsdauer" readonly>
+            <button type="button" id="rndBerechnenBtn" style="margin-top:10px;">Restnutzungsdauer berechnen</button>
+        </div>
+        <div class="info-text">
+            Hinweis: Die formelbasierte Berechnung der Restnutzungsdauer ist bei sehr alten Häusern unzuverlässiger.<br>
+            Die Restnutzungsdauer wird auf maximal 70% der Gesamtnutzungsdauer begrenzt.
         </div>
     </div>
     
@@ -391,6 +434,137 @@
     </div>
 
 <script>
+// Konstanten
+const MODERNISIERUNG_TABELLE = [
+    {a:1.25, b:2.625, c:1.525, rel:0.6},
+    {a:1.25, b:2.625, c:1.525, rel:0.6},
+    {a:1.0767, b:2.2757, c:1.3878, rel:0.55},
+    {a:0.9033, b:1.9263, c:1.2505, rel:0.55},
+    {a:0.73, b:1.577, c:1.1133, rel:0.4},
+    {a:0.6725, b:1.4578, c:1.085, rel:0.35},
+    {a:0.615, b:1.3385, c:1.0567, rel:0.3},
+    {a:0.5575, b:1.2193, c:1.0283, rel:0.25},
+    {a:0.5, b:1.1, c:1.0, rel:0.2},
+    {a:0.466, b:1.027, c:0.9906, rel:0.19},
+    {a:0.432, b:0.954, c:0.9811, rel:0.18},
+    {a:0.398, b:0.881, c:0.9717, rel:0.17},
+    {a:0.364, b:0.808, c:0.9622, rel:0.16},
+    {a:0.33, b:0.735, c:0.9528, rel:0.15},
+    {a:0.304, b:0.676, c:0.9506, rel:0.14},
+    {a:0.278, b:0.617, c:0.9485, rel:0.13},
+    {a:0.252, b:0.558, c:0.9463, rel:0.12},
+    {a:0.226, b:0.499, c:0.9442, rel:0.11},
+    {a:0.2, b:0.44, c:0.942, rel:0.1},
+    {a:0.2, b:0.44, c:0.942, rel:0.1},
+    {a:0.2, b:0.44, c:0.942, rel:0.1}
+];
+
+// Debug-Funktion
+function debug(msg, data) {
+    console.log(msg, data);
+}
+
+// Hilfsfunktion: Modernisierungspunkte berechnen
+function getModernisierungspunkte() {
+    const elemente = [
+        'mod_dach',
+        'mod_fenster',
+        'mod_leitungen',
+        'mod_heizung',
+        'mod_waermedaemmung',
+        'mod_baeder',
+        'mod_innenausbau',
+        'mod_grundriss'
+    ];
+    
+    const punkte = elemente.reduce((sum, id) => {
+        const wert = Number(document.getElementById(id).value) || 0;
+        debug(`Modernisierungspunkte für ${id}:`, wert);
+        return sum + wert;
+    }, 0);
+    
+    const begrenzterWert = Math.min(20, punkte);
+    debug('Gesamtpunktzahl (begrenzt auf 20):', begrenzterWert);
+    return begrenzterWert;
+}
+
+function updateRestnutzungsdauer() {
+    // Hole alle benötigten Werte
+    const ausstattungsstandard = document.querySelector('input[name="ausstattungsstandard"]:checked').value;
+    const GESAMTNUTZUNGSDAUER = { einfach: 65, mittel: 70, gehoben: 75, sehrGehoben: 80 };
+    const baujahr = Number(document.getElementById('baujahr').value);
+    const aktuellesJahr = new Date().getFullYear();
+    const nutzungsdauer = GESAMTNUTZUNGSDAUER[ausstattungsstandard];
+    const modernisierungspunkte = getModernisierungspunkte();
+    
+    debug('Ausstattungsstandard:', ausstattungsstandard);
+    debug('Gesamtnutzungsdauer:', nutzungsdauer);
+    debug('Baujahr:', baujahr);
+    debug('Modernisierungspunkte:', modernisierungspunkte);
+    
+    const alter = aktuellesJahr - baujahr;
+    const relativesAlter = Math.min(alter, nutzungsdauer) / nutzungsdauer;
+    const t = MODERNISIERUNG_TABELLE[modernisierungspunkte];
+    
+    debug('Alter:', alter);
+    debug('Relatives Alter:', relativesAlter);
+    debug('Parameter t:', t);
+    
+    let restnutzungsdauer;
+    const normalRND = nutzungsdauer - Math.min(alter, nutzungsdauer);
+    debug('Normale RND (GND - Alter):', normalRND);
+    
+    // Wenn das relative Alter kleiner ist als der Schwellwert
+    if (relativesAlter < t.rel) {
+        restnutzungsdauer = normalRND;
+        debug('Verwendete normale RND, da relatives Alter < Schwellwert');
+    } else {
+        // Formel aus ImmoWertV
+        const formelRND = t.a * (alter * alter / nutzungsdauer) - t.b * alter + t.c * nutzungsdauer;
+        debug('Berechnete Formel-RND:', formelRND);
+    }
+    
+    restnutzungsdauer = Math.max(0, formelRND, normalRND);
+    debug('Finale RND (nach Begrenzung >= 0):', restnutzungsdauer);
+    
+    document.getElementById('restnutzungsdauer').value = restnutzungsdauer.toFixed(1);
+
+    // Nicht größer als 70% der Gesamtnutzungsdauer kommt direkt aus der ImmoWertV Anlage 2
+    return Math.min(restnutzungsdauer, .7 * nutzungsdauer);
+}
+
+// Initialisierung und Event Listener
+document.addEventListener('DOMContentLoaded', function() {
+    // Event Listener für alle Modernisierungselemente
+    ['mod_dach','mod_fenster','mod_leitungen','mod_heizung','mod_waermedaemmung','mod_baeder','mod_innenausbau','mod_grundriss'].forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            debug('Event Listener installiert für:', id);
+            element.addEventListener('input', () => {
+                debug(`Änderung in ${id} erkannt`);
+                updateRestnutzungsdauer();
+            });
+        } else {
+            console.error(`Element nicht gefunden: ${id}`);
+        }
+    });
+    
+    // Event Listener für Baujahr und Ausstattungsstandard
+    document.getElementById('baujahr').addEventListener('input', updateRestnutzungsdauer);
+    document.querySelectorAll('input[name="ausstattungsstandard"]').forEach(radio => {
+        radio.addEventListener('change', updateRestnutzungsdauer);
+    });
+    
+    // Button Event Listener
+    const rndButton = document.getElementById('rndBerechnenBtn');
+    if (rndButton) {
+        rndButton.addEventListener('click', updateRestnutzungsdauer);
+    }
+    
+    // Initial berechnen
+    updateRestnutzungsdauer();
+});
+
 // Funktion zur Währungsformatierung
 function formatCurrency(value) {
     return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value);
@@ -430,13 +604,12 @@ function berechnen() {
     var sachwertfaktor = Number(document.getElementById('sachwertfaktor').value);
     var bruttoGrundflaeche = Number(document.getElementById('bruttoGrundflaeche').value);
     var baujahr = Number(document.getElementById('baujahr').value);
-    var modernisierungsjahr = document.getElementById('modernisierungsjahr').value ? 
-                             Number(document.getElementById('modernisierungsjahr').value) : null;
     var unterkellerung = document.getElementById('unterkellerung').value;
     var dachgeschoss = document.getElementById('dachgeschoss').value;
     var ausstattungsstandard = document.querySelector('input[name="ausstattungsstandard"]:checked').value;
     var baumaengel = Number(document.getElementById('baumaengel').value);
     var sonstigesWert = Number(document.getElementById('sonstigesWert').value);
+    var modernisierungspunkte = getModernisierungspunkte();
     
     // 1. Bodenwert berechnen
     var bodenwert = grundstuecksgroesse * bodenrichtwert;
@@ -466,14 +639,16 @@ function berechnen() {
     if (dachgeschoss === 'nicht') gebaeude_neu *= 0.9;
     
     // 4. Alterswertminderung berechnen
-    var fiktives_Baujahr = baujahr;
-    if (modernisierungsjahr) {
-        fiktives_Baujahr = baujahr + (modernisierungsjahr - baujahr) * 0.5;
-    }
-    
-    var alter = aktuellesJahr - fiktives_Baujahr;
+    var alter = aktuellesJahr - baujahr;
     var nutzungsdauer = GESAMTNUTZUNGSDAUER[ausstattungsstandard];
-    var alterswertminderung = Math.min(alter / nutzungsdauer, 0.9) * gebaeude_neu;
+    var relativesAlter = alter / nutzungsdauer;
+    var t = MODERNISIERUNG_TABELLE[Math.max(0, Math.min(20, modernisierungspunkte))];
+    
+    // Begrenze die RND auf nicht-negativ
+    restnutzungsdauer = updateRestnutzungsdauer();
+
+    // Alterswertminderung nach neuer RND
+    var alterswertminderung = (1 - (restnutzungsdauer / nutzungsdauer)) * gebaeude_neu;
     
     // 5. Gebäudesachwert nach Alterswertminderung
     var gebaeudewert = gebaeude_neu - alterswertminderung;
@@ -510,7 +685,7 @@ function berechnen() {
         bauform === 'doppelhaus' ? "Faktor 0,95 bei NHK (Doppelhaushälfte)" : 
         "Faktor 0,90 bei NHK (Reihenhaus)";
     document.getElementById('gebaeudeSachwertNeu').textContent = formatCurrency(gebaeude_neu);
-    document.getElementById('nutzungsdauerAnzeige').textContent = nutzungsdauer + " Jahre";
+    document.getElementById('nutzungsdauerAnzeige').textContent = nutzungsdauer + " Jahre (Rest: " + restnutzungsdauer.toFixed(1) + " Jahre)";
     document.getElementById('alterswertminderung').textContent = formatCurrency(alterswertminderung);
     document.getElementById('gebaeudeSachwertNachAlter').textContent = formatCurrency(gebaeude_neu - alterswertminderung);
     document.getElementById('wertanpassungen').textContent = formatCurrency(wertanpassungen);
