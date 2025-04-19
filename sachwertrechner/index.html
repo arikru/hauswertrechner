@@ -521,16 +521,15 @@ function updateRestnutzungsdauer() {
     } else {
         // Formel aus ImmoWertV
         const formelRND = t.a * (alter * alter / nutzungsdauer) - t.b * alter + t.c * nutzungsdauer;
-        debug('Berechnete Formel-RND:', formelRND);
+        restnutzungsdauer = Math.max(formelRND, 0,  normalRND);
     }
     
-    restnutzungsdauer = Math.max(0, formelRND, normalRND);
-    debug('Finale RND (nach Begrenzung >= 0):', restnutzungsdauer);
-    
     document.getElementById('restnutzungsdauer').value = restnutzungsdauer.toFixed(1);
-
-    // Nicht größer als 70% der Gesamtnutzungsdauer kommt direkt aus der ImmoWertV Anlage 2
-    return Math.min(restnutzungsdauer, .7 * nutzungsdauer);
+    if (relativesAlter < 0.3) {
+        return restnutzungsdauer;
+    } else {
+        return Math.min(restnutzungsdauer, .7 * nutzungsdauer);
+    }
 }
 
 // Initialisierung und Event Listener
